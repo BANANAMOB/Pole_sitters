@@ -33,6 +33,8 @@ Umin = 1.0e-8
 max_target_z = 0.172189283908211 # DU
 cone_angle = np.pi/4 # rad
 
+opt_traj_fam = [] 
+
 #####################################################
 
 # Garrison+Lucas: play around with these parameters and see how they change solutions
@@ -69,7 +71,7 @@ class CR3BP_Thrust_Dynamics(oc.ODEBase):
         ####################################################
         super().__init__(ode,Xvars,Uvars)
 
-def plot_cone(ax):
+def plot_cone(ax):  # LUCAS
 
     # set parameters    
     height = max_target_z*np.cos(cone_angle)
@@ -83,7 +85,7 @@ def plot_cone(ax):
 
     R = radius * (Z_cone/height)
     
-    X_cone = R * np.cos(T)
+    X_cone = R * np.cos(T) + 1-mu_star
     Y_cone = R * np.sin(T)
 
     ax.plot_surface(X_cone, Y_cone, Z_cone, color='b', alpha=0.3, edgecolor='k', linewidth=0.2)
@@ -93,7 +95,7 @@ def plot_cone(ax):
     theta = np.linspace(0, 2*np.pi, n)
     Phi, Theta = np.meshgrid(phi, theta)
 
-    X_cap = max_target_z*np.sin(Phi)*np.cos(Theta)
+    X_cap = max_target_z*np.sin(Phi)*np.cos(Theta) + 1-mu_star
     Y_cap = max_target_z*np.sin(Phi)*np.sin(Theta)
     Z_cap = max_target_z*np.cos(Phi)
 
@@ -138,8 +140,8 @@ def Full_Plot(Traj,IG,ref_state):
     ax4.plot(Traj_array[0],Traj_array[1],Traj_array[2], color=[9/255,83/255,186/255])
     # plot the moon
     ax4.scatter(1-mu_star,0,0, color=[130/255,130/255,130/255], s=20)
-    # plot the cone
-    plot_cone(ax4)
+    # plot the cone LUCAS
+    plot_cone(ax4) 
 
     ax0.grid(True)
     ax1.grid(True)
@@ -153,14 +155,15 @@ def Full_Plot(Traj,IG,ref_state):
     ax3.set_ylabel(r'$||U||$ [m/s$^2$]')
     ax3.set_xlabel(r't [days]')
 
-    ax4.legend(["Reference", "Intermediate Soln", "Final Soln"], loc="upper right")
+    # ax4.legend(["Reference", "Intermediate Soln", "Final Soln"], loc="upper right")
     ax4.set_xlabel(r'$X$')
     ax4.set_ylabel(r'$Y$')
     ax4.set_zlabel(r'$Z$')
     fig.set_size_inches(10.5, 5.5, forward=True)
-
+    
     fig.set_tight_layout(True)
-    plt.show()
+    opt_traj_fam.append(ax4)  # LUCAS
+    # plt.show()
 
 
 # constrain the initial and terminal position and velocities to be the same after one period of the forced-periodic trajectory 
@@ -232,12 +235,12 @@ def compute_trajectories():
     # enumerating the different altitudes
     for _, targ in enumerate(target_z):
 
-        for i in np.linspace(1.5, 0, 20):
+        for i in np.linspace(1.5, 0, 20): # LUCAS
             
             # Garrison+Lucas: change the value of tf in BoundaryLast (e.g., tf*0.8) and see how that changes the solution space 
             #               : also try out different values for targ or target_z        
             BoundaryFirst = list([target_x, target_y, targ]) + [0]
-            BoundaryLast =  list([target_x, target_y, targ]) + [i*tf]
+            BoundaryLast =  list([target_x, target_y, targ]) + [i*tf] # LUCAS
 
             phase2 = run_optimizer(ode, IG, BoundaryFirst, BoundaryLast, optType, 0, Umax, Umin, numKnots, numThreads, MeshTol, EControl)
             IG = phase2.returnTraj()
@@ -252,7 +255,7 @@ def compute_trajectories():
                 integTab.setAbsTol(1.0e-16)
                 integTab.setRelTol(1.0e-14)
 
-                TrajI   = np.array(integTab.integrate_dense(Traj[0],i*tf))
+                TrajI   = np.array(integTab.integrate_dense(Traj[0],i*tf)) # LUCAS
 
                 DU = 384400000.0000000
                 TU = 2.360584684800000E+06/(2*np.pi)
@@ -275,7 +278,7 @@ def compute_trajectories():
 
 
             print("Z magnitude:                 ",targ," DU")
-            print("Period:                      ",i*tf, " TU")
+            print("Period:                      ",i*tf, " TU") # LUCAS
             print("Passed tests (1) or not (0): ",f)
             print("Delta V:                     ",dV," m/s")
             Full_Plot(Traj,IG,ref_state_integrated)
