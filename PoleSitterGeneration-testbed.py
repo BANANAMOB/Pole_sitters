@@ -31,9 +31,7 @@ Umin = 1.0e-8
 ####################### LUCAS #######################
 
 max_target_z = 0.172189283908211 # DU
-cone_angle = np.pi # rad
-
-SOI_limit = 1
+cone_angle = np.pi/4 # rad
 
 #####################################################
 
@@ -70,6 +68,36 @@ class CR3BP_Thrust_Dynamics(oc.ODEBase):
         ode = vf.stack([xdot,ydot,zdot,xddot,yddot,zddot])
         ####################################################
         super().__init__(ode,Xvars,Uvars)
+
+def plot_cone(ax):
+
+    # set parameters    
+    height = max_target_z*np.cos(cone_angle)
+    radius = max_target_z*np.sin(cone_angle)
+    n = 50
+
+    # draw cone
+    theta = np.linspace(0, 2*np.pi, n)
+    z = np.linspace(0, height, 2)
+    T, Z_cone = np.meshgrid(theta, z)
+
+    R = radius * (Z_cone/height)
+    
+    X_cone = R * np.cos(T)
+    Y_cone = R * np.sin(T)
+
+    ax.plot_surface(X_cone, Y_cone, Z_cone, color='b', alpha=0.3, edgecolor='k', linewidth=0.2)
+    
+    # draw cap
+    phi = np.linspace(0, cone_angle, n) # polar angle (0 = north pole, pi = south pole)
+    theta = np.linspace(0, 2*np.pi, n)
+    Phi, Theta = np.meshgrid(phi, theta)
+
+    X_cap = max_target_z*np.sin(Phi)*np.cos(Theta)
+    Y_cap = max_target_z*np.sin(Phi)*np.sin(Theta)
+    Z_cap = max_target_z*np.cos(Phi)
+
+    ax.plot_surface(X_cap, Y_cap, Z_cap, color='b', alpha=0.3, edgecolor='k', linewidth=0.2)
 
 
 def Full_Plot(Traj,IG,ref_state):
@@ -110,6 +138,8 @@ def Full_Plot(Traj,IG,ref_state):
     ax4.plot(Traj_array[0],Traj_array[1],Traj_array[2], color=[9/255,83/255,186/255])
     # plot the moon
     ax4.scatter(1-mu_star,0,0, color=[130/255,130/255,130/255], s=20)
+    # plot the cone
+    plot_cone(ax4)
 
     ax0.grid(True)
     ax1.grid(True)
@@ -202,7 +232,7 @@ def compute_trajectories():
     # enumerating the different altitudes
     for _, targ in enumerate(target_z):
 
-        for i in np.linspace(1, 0, 20):
+        for i in np.linspace(1.5, 0, 20):
             
             # Garrison+Lucas: change the value of tf in BoundaryLast (e.g., tf*0.8) and see how that changes the solution space 
             #               : also try out different values for targ or target_z        
