@@ -33,8 +33,6 @@ Umin = 1.0e-8
 max_target_z = 0.172189283908211 # DU
 cone_angle = np.pi/4 # rad
 
-opt_traj_fam = [] 
-
 #####################################################
 
 # Garrison+Lucas: play around with these parameters and see how they change solutions
@@ -101,6 +99,67 @@ def plot_cone(ax):  # LUCAS
 
     ax.plot_surface(X_cap, Y_cap, Z_cap, color='b', alpha=0.3, edgecolor='k', linewidth=0.2)
 
+def plot_opt_family(Traj,IG,ref_state):
+
+    DU = 384400000.0000000
+    TU = 2.360584684800000E+06/(2*np.pi)
+
+    Traj_array = np.array(Traj).T
+    IG_array = np.array(IG)
+
+    if len(IG_array) == max(np.shape(IG_array)):
+        IG_array = IG_array.T
+
+    # Thrust_Energy_Mag = DU/TU**2 * np.array([[np.sqrt(IG_array[7,i]**2 + IG_array[8,i]**2 + IG_array[9,i]**2)] for i in range(max(np.shape(IG_array)))])
+    # Thrust_Mass_Mag = DU/TU**2 * np.array([[np.sqrt(Traj_array[7,i]**2 + Traj_array[8,i]**2 + Traj_array[9,i]**2)] for i in range(max(np.shape(Traj_array)))])
+
+    fig = plt.figure()
+    # ax0 = plt.subplot(421)
+    # ax1 = plt.subplot(423)
+    # ax2 = plt.subplot(425)
+    # ax3 = plt.subplot(427)
+    ax4 = plt.subplot(122, projection='3d')
+
+    # ax0.plot(TU/86400 * Traj_array[6], DU/TU**2 * Traj_array[7], color=[9/255,83/255,186/255])  # plots u_x vs time
+    # ax0.plot(TU/86400 * np.linspace(0,Traj_array[6][-1],max(np.shape(IG_array))), DU/TU**2 * IG_array[7], color=[252/255, 186/255, 3/255])
+    # ax1.plot(TU/86400 * Traj_array[6], DU/TU**2 * Traj_array[8], color=[9/255,83/255,186/255])  # plots u_y vs time
+    # ax1.plot(TU/86400 * np.linspace(0,Traj_array[6][-1],max(np.shape(IG_array))), DU/TU**2 * IG_array[8], color=[252/255, 186/255, 3/255])
+    # ax2.plot(TU/86400 * Traj_array[6], DU/TU**2 * Traj_array[9], color=[9/255,83/255,186/255])  # plots u_z vs time
+    # ax2.plot(TU/86400 * np.linspace(0,Traj_array[6][-1],max(np.shape(IG_array))), DU/TU**2 * IG_array[9], color=[252/255, 186/255, 3/255])
+    # ax3.plot(TU/86400 * Traj_array[6], Thrust_Mass_Mag, color=[9/255,83/255,186/255])     # plots u mag vs time
+    # ax3.plot(TU/86400 * np.linspace(0,Traj_array[6][-1],max(np.shape(IG_array))), Thrust_Energy_Mag, color=[252/255, 186/255, 3/255])     # plots u mag vs time
+
+    # plot the reference trajectory
+    ax4.plot(ref_state[:,0], ref_state[:,1], ref_state[:,2], color=[0/255,0/255,0/255])
+    # plot the energy optimal trajectory
+    ax4.plot(IG_array[0], IG_array[1], IG_array[2], color=[252/255, 186/255, 3/255])
+    # plot the mass optimal trajectory
+    ax4.plot(Traj_array[0],Traj_array[1],Traj_array[2], color=[9/255,83/255,186/255])
+    # plot the moon
+    ax4.scatter(1-mu_star,0,0, color=[130/255,130/255,130/255], s=20)
+    # plot the cone LUCAS
+    plot_cone(ax4) 
+
+    # ax0.grid(True)
+    # ax1.grid(True)
+    # ax2.grid(True)
+    # ax3.grid(True)
+    ax4.grid(True)
+
+    # ax0.set_ylabel(r'$U_x$')
+    # ax1.set_ylabel(r'$U_y$')
+    # ax2.set_ylabel(r'$U_z$')
+    # ax3.set_ylabel(r'$||U||$ [m/s$^2$]')
+    # ax3.set_xlabel(r't [days]')
+
+    # ax4.legend(["Reference", "Intermediate Soln", "Final Soln"], loc="upper right")
+    ax4.set_xlabel(r'$X$')
+    ax4.set_ylabel(r'$Y$')
+    ax4.set_zlabel(r'$Z$')
+    fig.set_size_inches(10.5, 5.5, forward=True)
+    
+    fig.set_tight_layout(True)
+    # plt.show()
 
 def Full_Plot(Traj,IG,ref_state):
 
@@ -155,15 +214,14 @@ def Full_Plot(Traj,IG,ref_state):
     ax3.set_ylabel(r'$||U||$ [m/s$^2$]')
     ax3.set_xlabel(r't [days]')
 
-    # ax4.legend(["Reference", "Intermediate Soln", "Final Soln"], loc="upper right")
+    ax4.legend(["Reference", "Intermediate Soln", "Final Soln"], loc="upper right")
     ax4.set_xlabel(r'$X$')
     ax4.set_ylabel(r'$Y$')
     ax4.set_zlabel(r'$Z$')
     fig.set_size_inches(10.5, 5.5, forward=True)
     
     fig.set_tight_layout(True)
-    opt_traj_fam.append(ax4)  # LUCAS
-    # plt.show()
+    plt.show()
 
 
 # constrain the initial and terminal position and velocities to be the same after one period of the forced-periodic trajectory 
@@ -205,8 +263,6 @@ def plot_traj(Traj_array):
 
 
     fig.set_tight_layout(True)
-    plt.show()
-
 
 # code for computing the forced periodic trajectories. this example computes forced periodic trajectories that travel over the moon in the synodic frame "pole sitters"
 # it computes these trajectories for a variety of elevations over the pole of the moon
@@ -281,14 +337,18 @@ def compute_trajectories():
             print("Period:                      ",i*tf, " TU") # LUCAS
             print("Passed tests (1) or not (0): ",f)
             print("Delta V:                     ",dV," m/s")
-            Full_Plot(Traj,IG,ref_state_integrated)
+            # Full_Plot(Traj,IG,ref_state_integrated)
+            plot_opt_family(Traj,IG,ref_state_integrated)
             IG = Traj
 
 
 
 
 def run_optimizer(ode, IG, BoundaryFirst, BoundaryLast, optType, E_or_T, Umax, Umin, numKnots, numThreads, MeshTol, EControl):
-    phase = ode.phase(optType, IG, numKnots)
+    try:
+        phase = ode.phase(optType, IG, numKnots)
+    except:
+        plt.show()
     #Fix first state and time
     phase.addBoundaryValue("First", range(0,3), BoundaryFirst[0:3]) #Q: Does this have constraints on the dimensionality? A: 1d array if this doesnt work
     #Fix last state and time
@@ -351,3 +411,4 @@ def run_optimizer(ode, IG, BoundaryFirst, BoundaryLast, optType, E_or_T, Umax, U
 if __name__ == "__main__":
  
     compute_trajectories()
+    plt.show()
