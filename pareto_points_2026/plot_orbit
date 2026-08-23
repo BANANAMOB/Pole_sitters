@@ -1,0 +1,59 @@
+def plot_orbit(Traj): # ,IG):
+
+    DU = 384400000.0000000
+    TU = 2.360584684800000E+06/(2*np.pi)
+
+    Traj_array = np.array(Traj).T
+    # IG_array = np.array(IG)
+
+    # if len(IG_array) == max(np.shape(IG_array)):
+    #     IG_array = IG_array.T
+
+    #Thrust_Energy_Mag = DU/TU**2 * np.array([[np.sqrt(IG_array[7,i]**2 + IG_array[8,i]**2 + IG_array[9,i]**2)] for i in range(max(np.shape(IG_array)))])
+    Thrust_Mass_Mag = DU/TU**2 * np.array([[np.sqrt(Traj_array[7,i]**2 + Traj_array[8,i]**2 + Traj_array[9,i]**2)] for i in range(max(np.shape(Traj_array)))])
+
+    fig = plt.figure()
+    ax0 = plt.subplot(421)
+    ax1 = plt.subplot(423)
+    ax2 = plt.subplot(425)
+    ax3 = plt.subplot(427)
+    ax4 = plt.subplot(122, projection='3d')
+
+    ax0.plot(TU/86400 * Traj_array[6], DU/TU**2 * Traj_array[7], color=[9/255,83/255,186/255])  # plots u_x vs time
+    #ax0.plot(TU/86400 * np.linspace(0,Traj_array[6][-1],max(np.shape(IG_array))), DU/TU**2 * IG_array[7], color=[252/255, 186/255, 3/255])
+    ax1.plot(TU/86400 * Traj_array[6], DU/TU**2 * Traj_array[8], color=[9/255,83/255,186/255])  # plots u_y vs time
+    #ax1.plot(TU/86400 * np.linspace(0,Traj_array[6][-1],max(np.shape(IG_array))), DU/TU**2 * IG_array[8], color=[252/255, 186/255, 3/255])
+    ax2.plot(TU/86400 * Traj_array[6], DU/TU**2 * Traj_array[9], color=[9/255,83/255,186/255])  # plots u_z vs time
+    #ax2.plot(TU/86400 * np.linspace(0,Traj_array[6][-1],max(np.shape(IG_array))), DU/TU**2 * IG_array[9], color=[252/255, 186/255, 3/255])
+    ax3.plot(TU/86400 * Traj_array[6], Thrust_Mass_Mag, color=[9/255,83/255,186/255])     # plots u mag vs time
+    #ax3.plot(TU/86400 * np.linspace(0,Traj_array[6][-1],max(np.shape(IG_array))), Thrust_Energy_Mag, color=[252/255, 186/255, 3/255])     # plots u mag vs time
+
+    # plot the energy optimal trajectory
+    #ax4.plot(IG_array[0], IG_array[1], IG_array[2], color=[252/255, 186/255, 3/255])
+    # plot the mass optimal trajectory
+    ax4.plot(Traj_array[0],Traj_array[1],Traj_array[2], color=[9/255,83/255,186/255])
+    # plot the moon
+    ax4.scatter(1-mu_star,0,0, color=[130/255,130/255,130/255], s=20)
+    # plot the cone 
+    #plot_cone(ax4,cone_ang) 
+
+    ax0.grid(True)
+    ax1.grid(True)
+    ax2.grid(True)
+    ax3.grid(True)
+    ax4.grid(True)
+
+    ax0.set_ylabel(r'$U_x$')
+    ax1.set_ylabel(r'$U_y$')
+    ax2.set_ylabel(r'$U_z$')
+    ax3.set_ylabel(r'$||U||$ [m/s$^2$]')
+    ax3.set_xlabel(r't [days]')
+
+    ax4.set_xlabel(r'$X$')
+    ax4.set_ylabel(r'$Y$')
+    ax4.set_zlabel(r'$Z$')
+    fig.set_size_inches(10.5, 5.5, forward=True)
+    
+    fig.set_tight_layout(True)
+
+    return ax4
